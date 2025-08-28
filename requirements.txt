@@ -1,0 +1,19 @@
+# Dependências para integração Azure DevOps + Airflow
+
+# Azure DevOps Client
+requests>=2.31.0
+
+# Airflow (para desenvolvimento/teste local)
+apache-airflow>=2.8.0
+
+# Para desenvolvimento e testes
+pytest>=7.0.0
+pytest-mock>=3.10.0
+python-dotenv>=1.0.0
+
+# SQL Server (para próximas fases)
+pyodbc>=4.0.39
+sqlalchemy>=2.0.0
+
+# Para manipulação de dados
+pandas>=2.0.0
