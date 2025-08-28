@@ -3,19 +3,12 @@ DAG Airflow para criação de cards no Azure DevOps
 Versão de produção - integração com sistema Fusion
 """
 
-from azure_devops_integration import create_azure_devops_client, AIRFLOW_CONFIG
 import logging
 from airflow.models import Variable
 from airflow.operators.python_operator import PythonOperator
 from airflow import DAG
-import sys
-import os
+
 from datetime import datetime, timedelta
-
-# Adiciona src ao Python path ANTES dos imports
-sys.path.insert(0, '/opt/airflow/src')
-
-# Import do cliente de produção
 
 # Configuração de logging
 logger = logging.getLogger(__name__)
@@ -25,10 +18,10 @@ default_args = {
     'owner': 'data-team',
     'depends_on_past': False,
     'start_date': datetime(2025, 8, 28),
-    'email_on_failure': AIRFLOW_CONFIG.get('email_on_failure', True),
+    'email_on_failure': True,
     'email_on_retry': False,
-    'retries': AIRFLOW_CONFIG.get('max_retries', 2),
-    'retry_delay': timedelta(minutes=AIRFLOW_CONFIG.get('retry_delay_minutes', 5)),
+    'retries': 2,
+    'retry_delay': timedelta(minutes=5),
 }
 
 # Definição do DAG
@@ -36,8 +29,8 @@ dag = DAG(
     'azure_devops_card_creation',  # ID fixo da DAG
     default_args=default_args,
     description='Cria cards no Azure DevOps baseado em tickets do Fusion',
-    schedule_interval=AIRFLOW_CONFIG['schedule_interval'],
-    catchup=AIRFLOW_CONFIG.get('catchup', False),
+    schedule_interval='0 */6 * * *',
+    catchup=False,
     tags=['azure-devops', 'fusion', 'integration', 'production']
 )
 
@@ -83,7 +76,7 @@ def get_pending_tickets(**context):
     tickets = [
         {
             'id': 'GITI.123456/2025',
-            'title': 'Configurar ambiente de desenvolvimento',
+            'titulo': 'Configurar ambiente de desenvolvimento',
             'description': 'Configurar o ambiente local para desenvolvimento da aplicação',
             'category': 'Desenvolvimento',
             'priority': 'Alta',
@@ -92,7 +85,7 @@ def get_pending_tickets(**context):
         },
         {
             'id': 'GITI.123457/2025',
-            'title': 'Corrigir bug na validação de formulário',
+            'titulo': 'Corrigir bug na validação de formulário',
             'description': 'O formulário não está validando campos obrigatórios corretamente',
             'category': 'Bug',
             'priority': 'Crítica',
@@ -117,6 +110,15 @@ def check_existing_cards(**context):
         str: Mensagem com resultado da verificação
     """
     try:
+        # Adiciona o path da biblioteca
+        import sys
+        import os
+        sys.path.insert(0, os.path.join(
+            os.path.dirname(__file__), '..', 'src'))
+
+        # Import aqui para garantir que o path está configurado
+        from azure_devops_integration import create_azure_devops_client
+
         # Recupera tickets da task anterior
         tickets = context['task_instance'].xcom_pull(key='pending_tickets')
 
@@ -164,6 +166,15 @@ def create_azure_devops_cards(**context):
         str: Mensagem com resultado da criação
     """
     try:
+        # Adiciona o path da biblioteca
+        import sys
+        import os
+        sys.path.insert(0, os.path.join(
+            os.path.dirname(__file__), '..', 'src'))
+
+        # Import aqui para garantir que o path está configurado
+        from azure_devops_integration import create_azure_devops_client
+
         # Recupera tickets novos da task anterior
         new_tickets = context['task_instance'].xcom_pull(key='new_tickets')
 
